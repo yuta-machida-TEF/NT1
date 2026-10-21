@@ -31,6 +31,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::BeginDisabled(connected);
 		ImGui::InputText("Host", host, sizeof(host));
 		ImGui::InputText("Port", port, sizeof(port));
+
+		//ソケットとは、プログラムがネットワークを通じてデータを送受信するための窓口です。
 		if (ImGui::Button("Connect")) {//ソケットを作成する
 			// TODO 2: 接続先を取得し、ソケットを作って接続する。
 			addrinfo hints{};
