@@ -33,7 +33,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::InputText("Port", port, sizeof(port));
 
 		//ソケットとは、プログラムがネットワークを通じてデータを送受信するための窓口です。
-		if (ImGui::Button("Connect")) {//ソケットを作成する
+		// ソケットを作成する
+		if (ImGui::Button("Connect")) {
 			// TODO 2: 接続先を取得し、ソケットを作って接続する。
 			addrinfo hints{};
 			hints.ai_family = AF_INET;//IPv4
@@ -49,24 +50,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::EndDisabled();
 		ImGui::SameLine();
 		ImGui::BeginDisabled(!connected);
-		if (ImGui::Button("Disconnect")) {//colsesocketを実行し、ソケットを無効化させる
+		if (ImGui::Button("Disconnect")) {
 			// TODO 3: ソケットを閉じ、未接続の状態へ戻す。
-			//切断するとき
-			if (!connected) {
-				closesocket(clientSocket);
-				clientSocket = INVALID_SOCKET;
-			}
-
-
 			// C++の抜枠： Disconnectボタンの中
-			closesocket(clientSocket);
+			closesocket(clientSocket);//colsesocketを実行し、ソケットを無効化させる
 			clientSocket = INVALID_SOCKET;
 			connected = false;
-
-			// アプリ終了後(ループ後)
-			if (clientSocket != INVALID_SOCKET) {
-				closesocket(clientSocket);//TCP通信に使用している、特定のソケットを閉じます。
-			}
 
 		}
 		ImGui::EndDisabled();
@@ -77,11 +66,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	// TODO 4: 接続が残っていれば閉じ、Winsockを終了する。
-	// C++の抜枠： Disconnectボタンの中
-	closesocket(clientSocket);
-	clientSocket = INVALID_SOCKET;
-	connected = false;
-	
 	//アプリ終了後(ループ後)
 	if (clientSocket != INVALID_SOCKET) {
 		closesocket(clientSocket);
