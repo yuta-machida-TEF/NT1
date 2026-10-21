@@ -55,6 +55,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				clientSocket = INVALID_SOCKET;
 			}
 
+
 			// C++の抜枠： Disconnectボタンの中
 			closesocket(clientSocket);
 			clientSocket = INVALID_SOCKET;
