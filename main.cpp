@@ -13,14 +13,15 @@
 
 enum class MessageType : uint16_t {
 	Text = 1, AssignPlayerId = 2, JoinRequest = 3,
-	WorldState = 4, Disconnect = 5,
+	WorldState = 4, Disconnect = 5,PlayerInput = 6,
 };
 struct PlayerState {
 
 	uint16_t id, x, y;
 };
 std::vector<PlayerState> players;
-
+uint16_t playerId = 0;
+char keys[256]{};
 
 // Windowsアプリのmain関数。ImGuiを使うため、Debugで実行する。
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -38,6 +39,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int receivedFrameCount = 0;
 
 	int connectionError = 0;
+	int loopCount = 0;
 
 	// TODO 1: 通信用の変数を用意し、Winsockを初期化する。
 	//通信を使い始めるとき
@@ -215,10 +217,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			    	// 本文の先頭
 			    	const char* payload = receiveBuffer + 4;
 			    
-			    	if (receivedType == static_cast<uint16_t>(MessageType::Disconnect)) {
+			    	if (receivedType == static_cast<uint16_t>(MessageType::AssignPlayerId)&& payloadSize == 2) {
 			    
-			    		connected = false;
-			    		break;
+						std::memcpy(&playerId, payload, 2);
 			    
 			    	} else if (receivedType == static_cast<uint16_t>(MessageType::WorldState) && payloadSize >= 2) {
 			    
@@ -255,9 +256,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			    }
 		    }
 
-		
-
-
 		ImGui::SameLine();
 		ImGui::BeginDisabled(!connected);
 		if (ImGui::Button("Disconnect")) {
@@ -269,14 +267,49 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			players.clear();
 			receiveBufferSize = 0;
+			playerId = 0;
 		}
 
 		 // プレイヤーを描画する
 		for (const PlayerState& player : players) {
 
-			uint32_t color = 0x55BD79FF;
-
+			uint32_t color = player.id == playerId ? 0xFFAB40FF : 0x55BD79FF;
 			Novice::DrawEllipse(player.x, player.y, 16, 16, 0.0f, color, kFillModeSolid);
+
+
+			if (player.id == playerId) {
+				int ring = 20 + static_cast<int>(loopCount % 30);//20~49pxを繰り返す
+				Novice::DrawEllipse(player.x, player.y, ring, ring, 0.0f, 0xFFAB40FF,kFillModeWireFrame);
+			}
+
+			Novice::GetHitKeyStateAll(keys);
+			//以下は接続中に行う
+			uint16_t inputBits = 0;
+			if(keys[DIK_W]){inputBits |= 0x0001;}
+			if(keys[DIK_S]){inputBits |= 0x0002;}
+			if(keys[DIK_A]){inputBits |= 0x0004;}
+			if(keys[DIK_D]){inputBits |= 0x0008;}
+
+			uint16_t InputPayloadSize = 2;
+			MessageType type = MessageType::PlayerInput;
+			char sendFrame[6]{};
+			std::memcpy(sendFrame, &InputPayloadSize, 2);
+			std::memcpy(sendFrame + 2, &type, 2);
+			std::memcpy(sendFrame + 4, &inputBits, 2);
+
+			int frameSize = 6;
+			int sentBytes = 0;
+			while (connected && sentBytes < frameSize) {
+				int N = send(clientSocket, sendFrame + sentBytes,
+					frameSize - sentBytes, 0);
+				if (N <= 0) {
+					connected = false;
+					break;
+				}
+				sentBytes += N;
+
+			}
+
 		}
 
 		ImGui::EndDisabled();//無効にする範囲を終了する。
