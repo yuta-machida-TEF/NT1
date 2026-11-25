@@ -72,6 +72,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			addrinfo* address = nullptr;
 
+			//getaddrinfoは、	接続先のIPアドレスやポート番号を取得する
 			int result = getaddrinfo(host, port, &hints, &address);
 
 			if (result != 0) {
@@ -80,6 +81,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			} else {
 
+				//socketは、TCP通信を行うためのソケットを作成
 				clientSocket = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
 
 				if (clientSocket == INVALID_SOCKET) {
@@ -88,6 +90,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				} else {
 
+					//connectは、サーバーに接続要求を送るもの
 					if (connect(clientSocket, address->ai_addr, static_cast<int>(address->ai_addrlen)) == SOCKET_ERROR) {
 
 						connectionError = WSAGetLastError();
@@ -114,6 +117,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				std::memcpy(sendBuffer, &payloadSize, 2);
 				std::memcpy(sendBuffer + 2, &typeValue, 2);
 
+				//send()は、サーバーにデータを送信する
 				int sentBytes = send(clientSocket, sendBuffer, sizeof(sendBuffer), 0);
 
 				if (sentBytes != sizeof(sendBuffer)) {
@@ -150,6 +154,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			    // サーバーからデータを受信する
 			    while (true) {
 			    
+					//recv()は、サーバーからデータを受信する
 			    	 int n = recv(clientSocket, tempBuffer, sizeof(tempBuffer), 0);
 			    	 
 			    	 if (n > 0) {
@@ -244,12 +249,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			    
 			    // 通信エラーなどで切断された場合
 			    if (!connected) {
+					//TCP接続を終了する
 			    	closesocket(clientSocket);
 			    	clientSocket = INVALID_SOCKET;
 			    }
 		    }
 
 		
+
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(!connected);
